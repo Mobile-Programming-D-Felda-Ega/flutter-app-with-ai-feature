@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "435744242488",
+    "project_id": "auth-modul-study-group-finder",
+    "storage_bucket": "auth-modul-study-group-finder.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:435744242488:android:dcc84cedc4f248a46cdfcd",
+        "android_client_info": {
+          "package_name": "com.example.study_group_finder"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD7TjscZ-3DzRkrxbtVrRc1awWsWLoNBWc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
