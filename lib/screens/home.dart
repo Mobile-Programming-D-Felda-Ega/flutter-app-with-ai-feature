@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/study_group.dart';
 import '../services/notification_service.dart';
 import 'group_form.dart';
+import 'assistant_screen.dart';
 import 'group_map_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -16,6 +17,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  int _currentTabIndex = 0;
   CollectionReference<Map<String, dynamic>> get _groups =>
       FirebaseFirestore.instance.collection('study_groups');
 
@@ -193,9 +195,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Study Group Finder',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
+        title: Text(
+          _currentTabIndex == 0 ? 'Study Group Finder' : 'AI Study Assistant',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
         ),
         actions: [
           IconButton(
@@ -205,147 +207,178 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.of(
-            context,
-          ).push(MaterialPageRoute(builder: (_) => const GroupFormScreen()));
-        },
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Buat Group'),
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: _selectedUniversity,
-                    items: _universities
-                        .map((u) => DropdownMenuItem(value: u, child: Text(u)))
-                        .toList(),
-                    onChanged: (v) {
-                      if (v != null) {
-                        _updateUniversity(v);
-                      }
-                    },
-                    decoration: const InputDecoration(
-                      labelText: 'Universitas',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: _selectedMajor,
-                    items: _majors
-                        .map((m) => DropdownMenuItem(value: m, child: Text(m)))
-                        .toList(),
-                    onChanged: (v) {
-                      if (v != null) {
-                        _updateMajor(v);
-                      }
-                    },
-                    decoration: const InputDecoration(
-                      labelText: 'Jurusan',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: _selectedCourse,
-                    items: _courses
-                        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                        .toList(),
-                    onChanged: (v) {
-                      if (v != null) {
-                        _updateCourse(v);
-                      }
-                    },
-                    decoration: const InputDecoration(
-                      labelText: 'Mata kuliah',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  onPressed: _clearFilters,
-                  tooltip: 'Reset filter',
-                  icon: const Icon(Icons.clear_all_rounded),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: TextField(
-              controller: _subjectFilterController,
-              decoration: const InputDecoration(
-                labelText: 'Cari mata kuliah (kosong = semua)',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.search_rounded),
-              ),
-              onChanged: (value) => _updateSubjectFilter(value),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: _groups.snapshots(),
-              builder: (context, snapshot) {
-                if (!_preferencesLoaded) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Text('Gagal memuat data: ${snapshot.error}'),
-                  );
-                }
-
-                final docs = snapshot.data?.docs ?? [];
-                final groups = docs.map(StudyGroup.fromFirestore).toList();
-                final filteredGroups = _applyFilters(groups);
-
-                if (filteredGroups.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'Tidak ada group yang cocok dengan filter ini.',
-                    ),
-                  );
-                }
-
-                filteredGroups.sort(
-                  (a, b) => a.scheduledAt.compareTo(b.scheduledAt),
-                );
-
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: filteredGroups.length + 1,
-                  itemBuilder: (context, index) {
-                    if (index == 0) {
-                      return _buildWelcomeCard(user);
-                    }
-
-                    final group = filteredGroups[index - 1];
-                    return _buildGroupCard(context, group);
-                  },
+      floatingActionButton: _currentTabIndex == 0
+          ? FloatingActionButton.extended(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const GroupFormScreen()),
                 );
               },
-            ),
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Buat Group'),
+            )
+          : null,
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _currentTabIndex,
+        onDestinationSelected: (index) {
+          setState(() => _currentTabIndex = index);
+        },
+        indicatorColor: const Color(0xFF7C3AED).withValues(alpha: 0.15),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home_rounded, color: Color(0xFF7C3AED)),
+            label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.auto_awesome_outlined),
+            selectedIcon: Icon(Icons.auto_awesome, color: Color(0xFF7C3AED)),
+            label: 'AI Assistant',
           ),
         ],
       ),
+      body: IndexedStack(
+        index: _currentTabIndex,
+        children: [
+          _buildHomeTab(user),
+          const AssistantScreen(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHomeTab(User? user) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  initialValue: _selectedUniversity,
+                  items: _universities
+                      .map((u) => DropdownMenuItem(value: u, child: Text(u)))
+                      .toList(),
+                  onChanged: (v) {
+                    if (v != null) {
+                      _updateUniversity(v);
+                    }
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Universitas',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  initialValue: _selectedMajor,
+                  items: _majors
+                      .map((m) => DropdownMenuItem(value: m, child: Text(m)))
+                      .toList(),
+                  onChanged: (v) {
+                    if (v != null) {
+                      _updateMajor(v);
+                    }
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Jurusan',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  initialValue: _selectedCourse,
+                  items: _courses
+                      .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                      .toList(),
+                  onChanged: (v) {
+                    if (v != null) {
+                      _updateCourse(v);
+                    }
+                  },
+                  decoration: const InputDecoration(
+                    labelText: 'Mata kuliah',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: _clearFilters,
+                tooltip: 'Reset filter',
+                icon: const Icon(Icons.clear_all_rounded),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: TextField(
+            controller: _subjectFilterController,
+            decoration: const InputDecoration(
+              labelText: 'Cari mata kuliah (kosong = semua)',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.search_rounded),
+            ),
+            onChanged: (value) => _updateSubjectFilter(value),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+            stream: _groups.snapshots(),
+            builder: (context, snapshot) {
+              if (!_preferencesLoaded) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text('Gagal memuat data: ${snapshot.error}'),
+                );
+              }
+
+              final docs = snapshot.data?.docs ?? [];
+              final groups = docs.map(StudyGroup.fromFirestore).toList();
+              final filteredGroups = _applyFilters(groups);
+
+              if (filteredGroups.isEmpty) {
+                return const Center(
+                  child: Text(
+                    'Tidak ada group yang cocok dengan filter ini.',
+                  ),
+                );
+              }
+
+              filteredGroups.sort(
+                (a, b) => a.scheduledAt.compareTo(b.scheduledAt),
+              );
+
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: filteredGroups.length + 1,
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return _buildWelcomeCard(user);
+                  }
+
+                  final group = filteredGroups[index - 1];
+                  return _buildGroupCard(context, group);
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 

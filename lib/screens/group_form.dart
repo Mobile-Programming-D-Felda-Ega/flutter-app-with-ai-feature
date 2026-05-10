@@ -262,7 +262,7 @@ class _GroupFormScreenState extends State<GroupFormScreen> {
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: _university ?? 'All',
+                      initialValue: _university ?? 'All',
                       items: _universities
                           .map(
                             (u) => DropdownMenuItem(value: u, child: Text(u)),
@@ -278,7 +278,7 @@ class _GroupFormScreenState extends State<GroupFormScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: _major ?? 'All',
+                      initialValue: _major ?? 'All',
                       items: _majors
                           .map(
                             (m) => DropdownMenuItem(value: m, child: Text(m)),
@@ -295,7 +295,7 @@ class _GroupFormScreenState extends State<GroupFormScreen> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: _course ?? 'All',
+                initialValue: _course ?? 'All',
                 items: _courses
                     .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                     .toList(),
