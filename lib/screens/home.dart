@@ -8,6 +8,7 @@ import '../services/notification_service.dart';
 import 'group_form.dart';
 import 'assistant_screen.dart';
 import 'group_map_screen.dart';
+import 'scanner_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -196,7 +197,11 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          _currentTabIndex == 0 ? 'Study Group Finder' : 'AI Study Assistant',
+          _currentTabIndex == 0
+              ? 'Study Group Finder'
+              : _currentTabIndex == 1
+              ? 'Scan Catatan (Edge AI)'
+              : 'AI Study Assistant',
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
         ),
         actions: [
@@ -231,6 +236,14 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Home',
           ),
           NavigationDestination(
+            icon: Icon(Icons.document_scanner_outlined),
+            selectedIcon: Icon(
+              Icons.document_scanner_rounded,
+              color: Color(0xFF7C3AED),
+            ),
+            label: 'Scan Notes',
+          ),
+          NavigationDestination(
             icon: Icon(Icons.auto_awesome_outlined),
             selectedIcon: Icon(Icons.auto_awesome, color: Color(0xFF7C3AED)),
             label: 'AI Assistant',
@@ -241,8 +254,38 @@ class _HomeScreenState extends State<HomeScreen> {
         index: _currentTabIndex,
         children: [
           _buildHomeTab(user),
+          const ScannerScreen(),
           const AssistantScreen(),
         ],
+      ),
+    );
+  }
+
+  DropdownButtonFormField<String> _buildFilterDropdown({
+    required String value,
+    required List<String> items,
+    required String label,
+    required ValueChanged<String> onChanged,
+  }) {
+    return DropdownButtonFormField<String>(
+      initialValue: value,
+      isExpanded: true,
+      items: items
+          .map(
+            (item) => DropdownMenuItem(
+              value: item,
+              child: Text(item, maxLines: 1, overflow: TextOverflow.ellipsis),
+            ),
+          )
+          .toList(),
+      onChanged: (v) {
+        if (v != null) {
+          onChanged(v);
+        }
+      },
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
       ),
     );
   }
@@ -252,68 +295,59 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         Padding(
           padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  initialValue: _selectedUniversity,
-                  items: _universities
-                      .map((u) => DropdownMenuItem(value: u, child: Text(u)))
-                      .toList(),
-                  onChanged: (v) {
-                    if (v != null) {
-                      _updateUniversity(v);
-                    }
-                  },
-                  decoration: const InputDecoration(
-                    labelText: 'Universitas',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  initialValue: _selectedMajor,
-                  items: _majors
-                      .map((m) => DropdownMenuItem(value: m, child: Text(m)))
-                      .toList(),
-                  onChanged: (v) {
-                    if (v != null) {
-                      _updateMajor(v);
-                    }
-                  },
-                  decoration: const InputDecoration(
-                    labelText: 'Jurusan',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  initialValue: _selectedCourse,
-                  items: _courses
-                      .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                      .toList(),
-                  onChanged: (v) {
-                    if (v != null) {
-                      _updateCourse(v);
-                    }
-                  },
-                  decoration: const InputDecoration(
-                    labelText: 'Mata kuliah',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 720;
+              final universityDropdown = _buildFilterDropdown(
+                value: _selectedUniversity,
+                items: _universities,
+                label: 'Universitas',
+                onChanged: _updateUniversity,
+              );
+              final majorDropdown = _buildFilterDropdown(
+                value: _selectedMajor,
+                items: _majors,
+                label: 'Jurusan',
+                onChanged: _updateMajor,
+              );
+              final courseDropdown = _buildFilterDropdown(
+                value: _selectedCourse,
+                items: _courses,
+                label: 'Mata kuliah',
+                onChanged: _updateCourse,
+              );
+              final resetButton = IconButton(
                 onPressed: _clearFilters,
                 tooltip: 'Reset filter',
                 icon: const Icon(Icons.clear_all_rounded),
-              ),
-            ],
+              );
+
+              if (isNarrow) {
+                return Column(
+                  children: [
+                    universityDropdown,
+                    const SizedBox(height: 8),
+                    majorDropdown,
+                    const SizedBox(height: 8),
+                    courseDropdown,
+                    const SizedBox(height: 4),
+                    Align(alignment: Alignment.centerRight, child: resetButton),
+                  ],
+                );
+              }
+
+              return Row(
+                children: [
+                  Expanded(child: universityDropdown),
+                  const SizedBox(width: 8),
+                  Expanded(child: majorDropdown),
+                  const SizedBox(width: 8),
+                  Expanded(child: courseDropdown),
+                  const SizedBox(width: 8),
+                  resetButton,
+                ],
+              );
+            },
           ),
         ),
         Padding(
@@ -353,9 +387,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               if (filteredGroups.isEmpty) {
                 return const Center(
-                  child: Text(
-                    'Tidak ada group yang cocok dengan filter ini.',
-                  ),
+                  child: Text('Tidak ada group yang cocok dengan filter ini.'),
                 );
               }
 
@@ -426,13 +458,19 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           const Icon(Icons.groups_rounded, color: Colors.white, size: 32),
           const SizedBox(height: 12),
-          const Text(
-            'Selamat datang! 👋',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+          Row(
+            children: const [
+              Text(
+                'Selamat datang!',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              SizedBox(width: 6),
+              Icon(Icons.emoji_emotions_rounded, color: Colors.white, size: 20),
+            ],
           ),
           const SizedBox(height: 4),
           Text(

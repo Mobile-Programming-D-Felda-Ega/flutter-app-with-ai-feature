@@ -21,6 +21,34 @@ class _AssistantScreenState extends State<AssistantScreen>
   static const _purple = Color(0xFF7C3AED);
   static const _cyan = Color(0xFF06B6D4);
 
+  static const Map<String, IconData> _emojiIconMap = {
+    '📚': Icons.menu_book_rounded,
+    '💡': Icons.lightbulb_rounded,
+    '❌': Icons.error_rounded,
+    '🔍': Icons.search_rounded,
+    '📅': Icons.today_rounded,
+    '👤': Icons.person_rounded,
+    '🤖': Icons.smart_toy_rounded,
+    '🤔': Icons.help_outline_rounded,
+    '📖': Icons.book_rounded,
+    '🧠': Icons.psychology_rounded,
+    '📝': Icons.edit_rounded,
+    '👥': Icons.group_rounded,
+    '🎯': Icons.track_changes_rounded,
+    '☀️': Icons.wb_sunny_rounded,
+    '🌤️': Icons.cloud_rounded,
+    '🌅': Icons.wb_sunny_rounded,
+    '🌙': Icons.nightlight_round,
+    '👇': Icons.arrow_downward_rounded,
+    '🕒': Icons.schedule_rounded,
+    '📍': Icons.place_rounded,
+    '⭐': Icons.star_rounded,
+  };
+
+  static final RegExp _emojiPattern = RegExp(
+    _emojiIconMap.keys.map(RegExp.escape).join('|'),
+  );
+
   @override
   void initState() {
     super.initState();
@@ -48,13 +76,16 @@ class _AssistantScreenState extends State<AssistantScreen>
       greeting = 'Selamat malam! 🌙';
     }
 
-    _messages.add(ChatMessage(
-      text: '$greeting\n\n'
-          'Saya **AI Study Assistant** kamu. '
-          'Saya bisa membantu kamu menemukan dan merekomendasikan study group.\n\n'
-          'Gunakan tombol quick action di bawah atau ketik pertanyaan! 👇',
-      isUser: false,
-    ));
+    _messages.add(
+      ChatMessage(
+        text:
+            '$greeting\n\n'
+            'Saya **AI Study Assistant** kamu. '
+            'Saya bisa membantu kamu menemukan dan merekomendasikan study group.\n\n'
+            'Gunakan tombol quick action di bawah atau ketik pertanyaan! 👇',
+        isUser: false,
+      ),
+    );
   }
 
   Future<void> _sendMessage(String text) async {
@@ -72,8 +103,9 @@ class _AssistantScreenState extends State<AssistantScreen>
     await Future.delayed(const Duration(milliseconds: 600));
 
     try {
-      final response =
-          await StudyAssistantService.instance.processMessage(text);
+      final response = await StudyAssistantService.instance.processMessage(
+        text,
+      );
 
       if (mounted) {
         setState(() {
@@ -85,10 +117,12 @@ class _AssistantScreenState extends State<AssistantScreen>
     } catch (e) {
       if (mounted) {
         setState(() {
-          _messages.add(ChatMessage(
-            text: '❌ Terjadi kesalahan. Silakan coba lagi.',
-            isUser: false,
-          ));
+          _messages.add(
+            ChatMessage(
+              text: '❌ Terjadi kesalahan. Silakan coba lagi.',
+              isUser: false,
+            ),
+          );
           _isTyping = false;
         });
         _scrollToBottom();
@@ -119,10 +153,7 @@ class _AssistantScreenState extends State<AssistantScreen>
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  _purple.withValues(alpha: 0.03),
-                  Colors.white,
-                ],
+                colors: [_purple.withValues(alpha: 0.03), Colors.white],
               ),
             ),
             child: ListView.builder(
@@ -173,10 +204,7 @@ class _AssistantScreenState extends State<AssistantScreen>
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              if (!isUser) ...[
-                _buildAvatar(),
-                const SizedBox(width: 8),
-              ],
+              if (!isUser) ...[_buildAvatar(), const SizedBox(width: 8)],
               Flexible(
                 child: Container(
                   padding: const EdgeInsets.symmetric(
@@ -193,17 +221,15 @@ class _AssistantScreenState extends State<AssistantScreen>
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: (isUser ? _purple : Colors.black)
-                            .withValues(alpha: 0.1),
+                        color: (isUser ? _purple : Colors.black).withValues(
+                          alpha: 0.1,
+                        ),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
                     ],
                   ),
-                  child: _buildRichText(
-                    message.text,
-                    isUser: isUser,
-                  ),
+                  child: _buildRichText(message.text, isUser: isUser),
                 ),
               ),
             ],
@@ -232,46 +258,92 @@ class _AssistantScreenState extends State<AssistantScreen>
           ),
         ],
       ),
-      child: const Icon(
-        Icons.auto_awesome,
-        color: Colors.white,
-        size: 18,
-      ),
+      child: const Icon(Icons.auto_awesome, color: Colors.white, size: 18),
     );
   }
 
   /// Parse simple markdown-like **bold** and render with proper styling.
   Widget _buildRichText(String text, {required bool isUser}) {
     final textColor = isUser ? Colors.white : const Color(0xFF1F2937);
-    final spans = <TextSpan>[];
+    final baseStyle = TextStyle(fontSize: 14, color: textColor, height: 1.5);
+    final spans = _buildFormattedSpans(text, baseStyle);
+
+    return RichText(
+      text: TextSpan(style: baseStyle, children: spans),
+    );
+  }
+
+  List<InlineSpan> _buildFormattedSpans(String text, TextStyle baseStyle) {
+    final spans = <InlineSpan>[];
     final boldPattern = RegExp(r'\*\*(.+?)\*\*');
     int lastEnd = 0;
 
     for (final match in boldPattern.allMatches(text)) {
       if (match.start > lastEnd) {
-        spans.add(TextSpan(text: text.substring(lastEnd, match.start)));
+        spans.addAll(
+          _replaceEmojiSpans(text.substring(lastEnd, match.start), baseStyle),
+        );
       }
-      spans.add(TextSpan(
-        text: match.group(1),
-        style: const TextStyle(fontWeight: FontWeight.bold),
-      ));
+
+      final boldText = match.group(1);
+      if (boldText != null) {
+        spans.addAll(
+          _replaceEmojiSpans(
+            boldText,
+            baseStyle.copyWith(fontWeight: FontWeight.bold),
+          ),
+        );
+      }
+
       lastEnd = match.end;
     }
 
     if (lastEnd < text.length) {
-      spans.add(TextSpan(text: text.substring(lastEnd)));
+      spans.addAll(_replaceEmojiSpans(text.substring(lastEnd), baseStyle));
     }
 
-    return RichText(
-      text: TextSpan(
-        style: TextStyle(
-          fontSize: 14,
-          color: textColor,
-          height: 1.5,
-        ),
-        children: spans,
-      ),
-    );
+    return spans;
+  }
+
+  List<InlineSpan> _replaceEmojiSpans(String text, TextStyle style) {
+    if (_emojiIconMap.isEmpty) {
+      return [TextSpan(text: text, style: style)];
+    }
+
+    final spans = <InlineSpan>[];
+    int last = 0;
+
+    for (final match in _emojiPattern.allMatches(text)) {
+      if (match.start > last) {
+        spans.add(
+          TextSpan(text: text.substring(last, match.start), style: style),
+        );
+      }
+
+      final emoji = match.group(0);
+      if (emoji != null && _emojiIconMap.containsKey(emoji)) {
+        spans.add(
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: Icon(
+              _emojiIconMap[emoji],
+              size: (style.fontSize ?? 14) + 2,
+              color: style.color,
+            ),
+          ),
+        );
+      } else if (emoji != null) {
+        spans.add(TextSpan(text: emoji, style: style));
+      }
+
+      last = match.end;
+    }
+
+    if (last < text.length) {
+      spans.add(TextSpan(text: text.substring(last), style: style));
+    }
+
+    return spans;
   }
 
   Widget _buildTypingIndicator() {
@@ -332,12 +404,12 @@ class _AssistantScreenState extends State<AssistantScreen>
   }
 
   Widget _buildQuickActions() {
-    final actions = [
-      ('🔍 Cari group', 'cari group'),
-      ('📚 Rekomendasi', 'rekomendasi'),
-      ('📅 Hari ini', 'jadwal hari ini'),
-      ('👤 Group saya', 'group saya'),
-      ('💡 Tips', 'tips belajar'),
+    final actions = const <(IconData, String, String)>[
+      (Icons.search_rounded, 'Cari group', 'cari group'),
+      (Icons.menu_book_rounded, 'Rekomendasi', 'rekomendasi'),
+      (Icons.today_rounded, 'Hari ini', 'jadwal hari ini'),
+      (Icons.group_rounded, 'Group saya', 'group saya'),
+      (Icons.lightbulb_rounded, 'Tips', 'tips belajar'),
     ];
 
     return Container(
@@ -345,9 +417,7 @@ class _AssistantScreenState extends State<AssistantScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(
-          top: BorderSide(
-            color: Colors.grey.withValues(alpha: 0.12),
-          ),
+          top: BorderSide(color: Colors.grey.withValues(alpha: 0.12)),
         ),
       ),
       child: SingleChildScrollView(
@@ -358,21 +428,26 @@ class _AssistantScreenState extends State<AssistantScreen>
             return Padding(
               padding: const EdgeInsets.only(right: 8),
               child: ActionChip(
-                label: Text(
-                  action.$1,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
+                label: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(action.$1, size: 16, color: _purple),
+                    const SizedBox(width: 6),
+                    Text(
+                      action.$2,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
                 backgroundColor: _purple.withValues(alpha: 0.08),
-                side: BorderSide(
-                  color: _purple.withValues(alpha: 0.2),
-                ),
+                side: BorderSide(color: _purple.withValues(alpha: 0.2)),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
-                onPressed: _isTyping ? null : () => _sendMessage(action.$2),
+                onPressed: _isTyping ? null : () => _sendMessage(action.$3),
               ),
             );
           }).toList(),
@@ -411,10 +486,7 @@ class _AssistantScreenState extends State<AssistantScreen>
               },
               decoration: InputDecoration(
                 hintText: 'Ketik pertanyaan...',
-                hintStyle: TextStyle(
-                  color: Colors.grey[400],
-                  fontSize: 14,
-                ),
+                hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
                 filled: true,
                 fillColor: const Color(0xFFF5F3FF),
                 contentPadding: const EdgeInsets.symmetric(
@@ -457,7 +529,11 @@ class _AssistantScreenState extends State<AssistantScreen>
               onPressed: _isTyping
                   ? null
                   : () => _sendMessage(_inputController.text),
-              icon: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+              icon: const Icon(
+                Icons.send_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
               splashRadius: 20,
             ),
           ),

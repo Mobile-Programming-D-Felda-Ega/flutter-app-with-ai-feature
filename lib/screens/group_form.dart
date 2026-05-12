@@ -20,6 +20,7 @@ class _GroupFormScreenState extends State<GroupFormScreen> {
   final _subjectController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _locationController = TextEditingController();
+  final _tagsController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedTime = TimeOfDay.now();
   double? _latitude;
@@ -82,6 +83,7 @@ class _GroupFormScreenState extends State<GroupFormScreen> {
       _university = group.university ?? 'All';
       _major = group.major ?? 'All';
       _course = group.course ?? 'All';
+      _tagsController.text = group.tags.join(', ');
     }
   }
 
@@ -90,6 +92,7 @@ class _GroupFormScreenState extends State<GroupFormScreen> {
     _subjectController.dispose();
     _descriptionController.dispose();
     _locationController.dispose();
+    _tagsController.dispose();
     super.dispose();
   }
 
@@ -181,6 +184,11 @@ class _GroupFormScreenState extends State<GroupFormScreen> {
       major: _major == 'All' ? null : _major,
       course: _course == 'All' ? null : _course,
       imageUrl: widget.group?.imageUrl,
+      tags: _tagsController.text
+          .split(',')
+          .map((t) => t.trim())
+          .where((t) => t.isNotEmpty)
+          .toList(),
       scheduledAt: scheduledAt,
       creatorId: widget.group?.creatorId ?? currentUser.uid,
       memberIds: widget.group?.memberIds ?? [currentUser.uid],
@@ -319,6 +327,16 @@ class _GroupFormScreenState extends State<GroupFormScreen> {
                   }
                   return null;
                 },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _tagsController,
+                decoration: const InputDecoration(
+                  labelText: 'Tags (pisahkan dengan koma)',
+                  hintText: 'Contoh: machine learning, python, CNN',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.label_rounded),
+                ),
               ),
               const SizedBox(height: 16),
               TextFormField(

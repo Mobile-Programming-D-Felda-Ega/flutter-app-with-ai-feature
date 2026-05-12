@@ -15,6 +15,7 @@ class StudyGroup {
     this.major,
     this.course,
     this.imageUrl,
+    this.tags = const [],
   });
 
   final String id;
@@ -30,6 +31,7 @@ class StudyGroup {
   final String? major;
   final String? course;
   final String? imageUrl;
+  final List<String> tags;
 
   factory StudyGroup.fromFirestore(
     QueryDocumentSnapshot<Map<String, dynamic>> doc,
@@ -53,6 +55,9 @@ class StudyGroup {
       major: data['major'] as String?,
       course: data['course'] as String?,
       imageUrl: data['imageUrl'] as String?,
+      tags: List<String>.from(
+        data['tags'] as List<dynamic>? ?? const [],
+      ),
     );
   }
 
@@ -70,6 +75,7 @@ class StudyGroup {
       'major': major,
       'course': course,
       'imageUrl': imageUrl,
+      'tags': tags,
       'updatedAt': FieldValue.serverTimestamp(),
     };
   }
@@ -87,6 +93,7 @@ class StudyGroup {
     String? major,
     String? course,
     String? imageUrl,
+    List<String>? tags,
   }) {
     return StudyGroup(
       id: id,
@@ -102,6 +109,7 @@ class StudyGroup {
       major: major ?? this.major,
       course: course ?? this.course,
       imageUrl: imageUrl ?? this.imageUrl,
+      tags: tags ?? this.tags,
     );
   }
 }
