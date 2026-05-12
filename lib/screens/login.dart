@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
+import '../core/theme/app_colors.dart';
+import '../core/theme/app_text_styles.dart';
 import 'register.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -15,6 +17,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _obscurePassword = true;
+  bool _rememberMe = false;
   String? _errorMessage;
 
   @override
@@ -55,185 +59,312 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF7C3AED), Color(0xFF06B6D4)],
-          ),
-        ),
+      backgroundColor: AppColors.background,
+      body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 420),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.95),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 20,
-                          spreadRadius: 0,
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Icon(
-                          Icons.groups_rounded,
-                          size: 64,
-                          color: const Color(0xFF7C3AED),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Study Group Finder',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1F2937),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Masuk untuk mencari teman belajar',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        const SizedBox(height: 28),
-                        Form(
-                          key: _formKey,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              TextFormField(
-                                controller: _emailController,
-                                keyboardType: TextInputType.emailAddress,
-                                decoration: InputDecoration(
-                                  labelText: 'Email',
-                                  prefixIcon: const Icon(Icons.email_outlined),
-                                  prefixIconColor: const Color(0xFF7C3AED),
-                                ),
-                                validator: (value) {
-                                  if (value == null || value.trim().isEmpty) {
-                                    return 'Email wajib diisi';
-                                  }
-                                  if (!value.contains('@')) {
-                                    return 'Format email tidak valid';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const SizedBox(height: 16),
-                              TextFormField(
-                                controller: _passwordController,
-                                obscureText: true,
-                                decoration: InputDecoration(
-                                  labelText: 'Password',
-                                  prefixIcon: const Icon(Icons.lock_outline),
-                                  prefixIconColor: const Color(0xFF7C3AED),
-                                ),
-                                validator: (value) {
-                                  if (value == null ||
-                                      value.trim().length < 6) {
-                                    return 'Password minimal 6 karakter';
-                                  }
-                                  return null;
-                                },
-                              ),
-                              const SizedBox(height: 20),
-                              if (_errorMessage != null) ...[
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.red.withOpacity(0.1),
-                                    border: Border.all(
-                                      color: Colors.red.withOpacity(0.3),
-                                    ),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    _errorMessage!,
-                                    style: const TextStyle(
-                                      color: Colors.red,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                              ],
-                              FilledButton.icon(
-                                onPressed: _isLoading ? null : _login,
-                                icon: _isLoading
-                                    ? const SizedBox(
-                                        height: 20,
-                                        width: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor: AlwaysStoppedAnimation(
-                                            Colors.white,
-                                          ),
-                                        ),
-                                      )
-                                    : const Icon(Icons.login),
-                                label: Text(
-                                  _isLoading ? 'Logging in...' : 'Masuk',
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Belum punya akun? ',
-                              style: TextStyle(color: Colors.grey[600]),
-                            ),
-                            TextButton(
-                              onPressed: _isLoading
-                                  ? null
-                                  : () {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (_) =>
-                                              const RegisterScreen(),
-                                        ),
-                                      );
-                                    },
-                              child: const Text(
-                                'Daftar sekarang',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF7C3AED),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                  const SizedBox(height: 40),
+                  // Logo & Title
+                  _buildLogo(),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Welcome back. Please enter your details.',
+                    style: AppTextStyles.bodyMedium,
+                    textAlign: TextAlign.center,
                   ),
+                  const SizedBox(height: 32),
+                  // Login Card
+                  _buildLoginCard(),
+                  const SizedBox(height: 24),
+                  // Divider
+                  _buildDivider(),
+                  const SizedBox(height: 24),
+                  // Social Login
+                  _buildSocialButtons(),
+                  const SizedBox(height: 32),
+                  // Sign Up Link
+                  _buildSignUpLink(),
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildLogo() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          Icons.hub_rounded,
+          size: 36,
+          color: AppColors.primary,
+        ),
+        const SizedBox(width: 10),
+        Text(
+          'StudyLink AI',
+          style: AppTextStyles.displayLarge.copyWith(
+            color: AppColors.primary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoginCard() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Email
+            Text('Email', style: AppTextStyles.titleMedium),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                hintText: 'student@university.edu',
+                prefixIcon: Icon(
+                  Icons.mail_outline_rounded,
+                  color: AppColors.textTertiary,
+                  size: 20,
+                ),
+              ),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Email wajib diisi';
+                }
+                if (!value.contains('@')) {
+                  return 'Format email tidak valid';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 20),
+            // Password
+            Text('Password', style: AppTextStyles.titleMedium),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _passwordController,
+              obscureText: _obscurePassword,
+              decoration: InputDecoration(
+                hintText: '••••••••',
+                prefixIcon: const Icon(
+                  Icons.lock_outline_rounded,
+                  color: AppColors.textTertiary,
+                  size: 20,
+                ),
+                suffixIcon: IconButton(
+                  onPressed: () {
+                    setState(() => _obscurePassword = !_obscurePassword);
+                  },
+                  icon: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                    color: AppColors.textTertiary,
+                    size: 20,
+                  ),
+                ),
+              ),
+              validator: (value) {
+                if (value == null || value.trim().length < 6) {
+                  return 'Password minimal 6 karakter';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            // Remember me + Forgot password
+            Row(
+              children: [
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: Checkbox(
+                    value: _rememberMe,
+                    onChanged: (v) => setState(() => _rememberMe = v ?? false),
+                    activeColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    side: const BorderSide(color: AppColors.cardBorder),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text('Remember me', style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textPrimary,
+                )),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () {
+                    // TODO: Implement forgot password
+                  },
+                  child: Text(
+                    'Forgot Password?',
+                    style: AppTextStyles.titleMedium.copyWith(
+                      color: AppColors.primary,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Error message
+            if (_errorMessage != null) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.errorLight,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.error_outline, color: AppColors.error, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _errorMessage!,
+                        style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            // Login Button
+            FilledButton(
+              onPressed: _isLoading ? null : _login,
+              child: _isLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation(Colors.white),
+                      ),
+                    )
+                  : const Text('Log In'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDivider() {
+    return Row(
+      children: [
+        const Expanded(child: Divider(color: AppColors.divider)),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            'or continue with',
+            style: AppTextStyles.bodySmall,
+          ),
+        ),
+        const Expanded(child: Divider(color: AppColors.divider)),
+      ],
+    );
+  }
+
+  Widget _buildSocialButtons() {
+    return Column(
+      children: [
+        // Google
+        OutlinedButton(
+          onPressed: () {
+            // TODO: Implement Google sign in
+          },
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.network(
+                'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
+                width: 20,
+                height: 20,
+                errorBuilder: (_, __, ___) => const Icon(
+                  Icons.g_mobiledata_rounded,
+                  size: 24,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Google',
+                style: AppTextStyles.titleMedium,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        // Apple
+        OutlinedButton(
+          onPressed: () {
+            // TODO: Implement Apple sign in
+          },
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.apple_rounded, size: 22, color: AppColors.textPrimary),
+              const SizedBox(width: 12),
+              Text(
+                'Apple',
+                style: AppTextStyles.titleMedium,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSignUpLink() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          "Don't have an account? ",
+          style: AppTextStyles.bodyMedium,
+        ),
+        GestureDetector(
+          onTap: _isLoading
+              ? null
+              : () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const RegisterScreen(),
+                    ),
+                  );
+                },
+          child: Text(
+            'Sign Up',
+            style: AppTextStyles.titleMedium.copyWith(
+              color: AppColors.primary,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

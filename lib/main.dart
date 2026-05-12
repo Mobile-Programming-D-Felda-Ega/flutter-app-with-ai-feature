@@ -2,11 +2,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:provider/provider.dart';
 
+import 'core/theme/app_theme.dart';
 import 'firebase_options.dart';
+import 'providers/auth_provider.dart' as app;
+import 'providers/user_provider.dart';
 import 'services/notification_service.dart';
-import 'screens/home.dart';
+import 'screens/main_shell.dart';
 import 'screens/login.dart';
+import 'screens/splash_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,10 +21,9 @@ Future<void> main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
   } catch (e) {
-    print('Firebase initialization error: $e');
-    // App akan tetap berjalan tapi dengan fallback mode
+    debugPrint('Firebase initialization error: $e');
     if (kIsWeb) {
-      print(
+      debugPrint(
         'Pastikan Firebase web config sudah ditambahkan ke firebase_options.dart',
       );
     }
@@ -37,81 +41,69 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Study Group Finder',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF7C3AED),
-          brightness: Brightness.light,
-        ),
-        appBarTheme: const AppBarTheme(
-          elevation: 0,
-          centerTitle: false,
-          backgroundColor: Color(0xFF7C3AED),
-          foregroundColor: Colors.white,
-        ),
-        floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: Color(0xFF7C3AED),
-          foregroundColor: Colors.white,
-          elevation: 8,
-        ),
-        cardTheme: CardThemeData(
-          elevation: 2,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: const Color(0xFFF5F5F5),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF7C3AED), width: 2),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 16,
-          ),
-        ),
-        filledButtonTheme: FilledButtonThemeData(
-          style: FilledButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            textStyle: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        outlinedButtonTheme: OutlinedButtonThemeData(
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            side: const BorderSide(color: Color(0xFFE5E7EB), width: 1.5),
-          ),
-        ),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => app.AuthProvider()),
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'StudyLink AI',
+        theme: AppTheme.light,
+        home: const SplashGate(),
       ),
-      home: const AuthGate(),
     );
   }
 }
 
-class AuthGate extends StatelessWidget {
+/// Shows splash screen on first load, then transitions to AuthGate.
+class SplashGate extends StatefulWidget {
+  const SplashGate({super.key});
+
+  @override
+  State<SplashGate> createState() => _SplashGateState();
+}
+
+class _SplashGateState extends State<SplashGate> {
+  bool _showSplash = true;
+
+  void _finishSplash() {
+    if (mounted) {
+      setState(() => _showSplash = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_showSplash) {
+      return SplashScreen(onFinished: _finishSplash);
+    }
+    return const AuthGate();
+  }
+}
+
+class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
+
+  @override
+  State<AuthGate> createState() => _AuthGateState();
+}
+
+class _AuthGateState extends State<AuthGate> {
+  @override
+  void initState() {
+    super.initState();
+    // Listen to auth changes and sync UserProvider
+    FirebaseAuth.instance.authStateChanges().listen((user) {
+      if (!mounted) return;
+      final userProvider = context.read<UserProvider>();
+      if (user != null) {
+        userProvider.listenToUser(user.uid);
+      } else {
+        userProvider.clear();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -125,7 +117,7 @@ class AuthGate extends StatelessWidget {
         }
 
         if (snapshot.hasData) {
-          return const HomeScreen();
+          return const MainShell();
         }
 
         return const LoginScreen();
