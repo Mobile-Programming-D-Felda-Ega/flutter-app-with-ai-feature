@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper functions ────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return request.auth.uid == uid;
+    }
+
+    // ── study_groups collection ─────────────────────────────────────
+    match /study_groups/{groupId} {
+      // Anyone logged-in can read groups (for discovery)
+      allow read: if isSignedIn();
+
+      // Any logged-in user can CREATE a group,
+      // as long as they set themselves as the creator
+      allow create: if isSignedIn()
+        && request.resource.data.creatorId == request.auth.uid;
+
+      // Only the group creator can UPDATE or DELETE
+      allow update: if isSignedIn()
+        && (resource.data.creatorId == request.auth.uid
+            // Allow members to join/leave (update memberIds only)
+            || request.auth.uid in resource.data.memberIds);
+
+      allow delete: if isSignedIn()
+        && resource.data.creatorId == request.auth.uid;
+    }
+
+    // ── users collection ────────────────────────────────────────────
+    match /users/{uid} {
+      // Users can only read/write their own document
+      allow read:   if isSignedIn() && isOwner(uid);
+      allow create: if isSignedIn() && isOwner(uid);
+      allow update: if isSignedIn() && isOwner(uid);
+      allow delete: if false; // Never allow delete
+    }
+  }
+}
