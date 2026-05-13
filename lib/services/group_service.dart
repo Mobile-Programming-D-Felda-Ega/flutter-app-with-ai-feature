@@ -15,10 +15,15 @@ class GroupService {
     required String groupId,
     required String uid,
   }) async {
-    // Atomic: update both documents
-    await _groups.doc(groupId).update({
+    // Pastikan dokumen group ada sebelum update
+    final groupDoc = await _groups.doc(groupId).get();
+    if (!groupDoc.exists) {
+      throw Exception('Study group tidak ditemukan (id: $groupId)');
+    }
+    // set+merge aman meski field memberIds belum ada di dokumen
+    await _groups.doc(groupId).set({
       'memberIds': FieldValue.arrayUnion([uid]),
-    });
+    }, SetOptions(merge: true));
     await UserService.instance.addJoinedGroup(uid, groupId);
   }
 
@@ -27,9 +32,9 @@ class GroupService {
     required String groupId,
     required String uid,
   }) async {
-    await _groups.doc(groupId).update({
+    await _groups.doc(groupId).set({
       'memberIds': FieldValue.arrayRemove([uid]),
-    });
+    }, SetOptions(merge: true));
     await UserService.instance.removeJoinedGroup(uid, groupId);
   }
 

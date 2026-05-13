@@ -215,9 +215,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 )),
                 const Spacer(),
                 GestureDetector(
-                  onTap: () {
-                    // TODO: Implement forgot password
-                  },
+                  onTap: _showForgotPasswordDialog,
                   child: Text(
                     'Forgot Password?',
                     style: AppTextStyles.titleMedium.copyWith(
@@ -294,7 +292,11 @@ class _LoginScreenState extends State<LoginScreen> {
         // Google
         OutlinedButton(
           onPressed: () {
-            // TODO: Implement Google sign in
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Google Sign-In coming soon! Use email for now.'),
+              ),
+            );
           },
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -321,7 +323,11 @@ class _LoginScreenState extends State<LoginScreen> {
         // Apple
         OutlinedButton(
           onPressed: () {
-            // TODO: Implement Apple sign in
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Apple Sign-In coming soon! Use email for now.'),
+              ),
+            );
           },
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -365,6 +371,78 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  void _showForgotPasswordDialog() {
+    final resetEmailController = TextEditingController(
+      text: _emailController.text.trim(),
+    );
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Reset Password'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Enter your email address and we\'ll send you a link to reset your password.',
+              style: AppTextStyles.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: resetEmailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: 'Email Address',
+                hintText: 'student@university.edu',
+                prefixIcon: Icon(Icons.mail_outline_rounded),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final email = resetEmailController.text.trim();
+              if (email.isEmpty || !email.contains('@')) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please enter a valid email address'),
+                  ),
+                );
+                return;
+              }
+              Navigator.of(ctx).pop();
+              try {
+                await FirebaseAuth.instance.sendPasswordResetEmail(
+                  email: email,
+                );
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Password reset email sent to $email'),
+                    ),
+                  );
+                }
+              } on FirebaseAuthException catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(e.message ?? 'Failed to send reset email'),
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Send Reset Email'),
+          ),
+        ],
+      ),
     );
   }
 }

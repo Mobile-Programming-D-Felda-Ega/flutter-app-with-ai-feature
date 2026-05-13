@@ -206,6 +206,7 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
                       return GroupListCard(
                         group: group,
                         isAiRecommended: group.tags.isNotEmpty && index < 3,
+                        isJoined: isJoined,
                         maxMembers: 15,
                         onJoin: () async {
                           if (uid == null) return;

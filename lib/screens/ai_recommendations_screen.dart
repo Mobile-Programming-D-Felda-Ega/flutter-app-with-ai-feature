@@ -1,7 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_colors.dart';
 import '../core/theme/app_text_styles.dart';
+import '../services/group_service.dart';
 import '../services/recommendation_service.dart';
 import '../widgets/ai_recommendation_card.dart';
 import '../widgets/app_header.dart';
@@ -82,20 +84,35 @@ class AiRecommendationsScreen extends StatelessWidget {
                         return AiRecommendationCard(
                           recommendation: rec,
                           isTopMatch: index == 0,
-                          onRequestJoin: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Request sent to "${rec.group.subjectName}"',
-                                ),
-                              ),
-                            );
+                          onRequestJoin: () async {
+                            final uid = FirebaseAuth.instance.currentUser?.uid;
+                            if (uid == null) return;
+                            try {
+                              await GroupService.instance.joinGroup(
+                                groupId: rec.group.id, uid: uid,
+                              );
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Joined "${rec.group.subjectName}"!',
+                                    ),
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text('Error: $e')),
+                                );
+                              }
+                            }
                           },
                           onViewDetails: () {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                  'Viewing "${rec.group.subjectName}"',
+                                  '${rec.group.subjectName} — ${rec.group.description}',
                                 ),
                               ),
                             );

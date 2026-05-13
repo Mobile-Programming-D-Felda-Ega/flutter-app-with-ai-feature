@@ -38,14 +38,7 @@ class ScanResultsScreen extends StatelessWidget {
                   const Spacer(),
                   Text('Scan Results', style: AppTextStyles.headlineSmall),
                   const Spacer(),
-                  IconButton(
-                    onPressed: () {},
-                    icon: const Icon(
-                      Icons.fullscreen_rounded,
-                      size: 24,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
+                  const SizedBox(width: 48),
                 ],
               ),
             ),

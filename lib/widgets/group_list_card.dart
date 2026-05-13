@@ -12,6 +12,7 @@ class GroupListCard extends StatelessWidget {
     super.key,
     required this.group,
     this.isAiRecommended = false,
+    this.isJoined = false,
     this.maxMembers = 10,
     this.onJoin,
     this.onTap,
@@ -19,6 +20,7 @@ class GroupListCard extends StatelessWidget {
 
   final StudyGroup group;
   final bool isAiRecommended;
+  final bool isJoined;
   final int maxMembers;
   final VoidCallback? onJoin;
   final VoidCallback? onTap;
@@ -146,17 +148,29 @@ class GroupListCard extends StatelessWidget {
             // Join button
             Align(
               alignment: Alignment.centerRight,
-              child: FilledButton(
-                onPressed: onJoin,
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
-                  minimumSize: Size.zero,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  textStyle: AppTextStyles.titleMedium.copyWith(color: Colors.white, fontSize: 13),
-                ),
-                child: const Text('Join Group'),
-              ),
+              child: isJoined
+                  ? OutlinedButton(
+                      onPressed: onJoin,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.error,
+                        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+                        minimumSize: Size.zero,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        side: const BorderSide(color: AppColors.error, width: 1.5),
+                      ),
+                      child: const Text('Leave Group'),
+                    )
+                  : FilledButton(
+                      onPressed: onJoin,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+                        minimumSize: Size.zero,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        textStyle: AppTextStyles.titleMedium.copyWith(color: Colors.white, fontSize: 13),
+                      ),
+                      child: const Text('Join Group'),
+                    ),
             ),
           ],
         ),

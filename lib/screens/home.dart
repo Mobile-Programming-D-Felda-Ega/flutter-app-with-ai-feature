@@ -9,6 +9,7 @@ import '../widgets/app_header.dart';
 import '../widgets/section_header.dart';
 import '../widgets/study_group_card.dart';
 import '../widgets/nearby_group_tile.dart';
+import 'discovery_screen.dart';
 import 'group_form.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -75,29 +76,37 @@ class _HomeScreenState extends State<HomeScreen> {
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.surfacePurple,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.cardBorderLight),
-                      ),
-                      child: TextField(
-                        decoration: InputDecoration(
-                          hintText: 'Search subjects, groups, or topics.',
-                          hintStyle: AppTextStyles.bodyMedium.copyWith(
-                            color: AppColors.textTertiary,
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const DiscoveryScreen(),
                           ),
-                          prefixIcon: const Icon(
-                            Icons.search_rounded,
-                            color: AppColors.textTertiary,
-                          ),
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 14,
-                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfacePurple,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: AppColors.cardBorderLight),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.search_rounded,
+                              color: AppColors.textTertiary,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Search subjects, groups, or topics.',
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: AppColors.textTertiary,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -110,7 +119,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: SectionHeader(
                       title: 'Recommended for you',
                       actionText: 'SEE ALL',
-                      onActionTap: () {},
+                      onActionTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const DiscoveryScreen(),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -137,6 +152,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                   return StudyGroupCard(
                                     group: groups[index],
                                     showAiMatch: index == 0,
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => const DiscoveryScreen(),
+                                        ),
+                                      );
+                                    },
                                   );
                                 },
                               ),
@@ -148,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.only(top: 28, bottom: 12),
                     child: SectionHeader(
                       title: 'Happening Nearby',
-                      onActionTap: () {},
+                      onActionTap: null,
                     ),
                   ),
                 ),
@@ -176,7 +198,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         return NearbyGroupTile(
                           title: group.subjectName,
                           location: group.location,
-                          distance: group.latitude != null ? '${(index * 0.2 + 0.1).toStringAsFixed(1)} mi' : null,
+                          distance: null,
                           icon: index.isEven
                               ? Icons.menu_book_rounded
                               : Icons.location_on_rounded,

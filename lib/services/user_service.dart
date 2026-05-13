@@ -69,7 +69,7 @@ class UserService {
     if (university != null) updates['university'] = university;
     if (major != null) updates['major'] = major;
     if (updates.isNotEmpty) {
-      await _users.doc(uid).update(updates);
+      await _users.doc(uid).set(updates, SetOptions(merge: true));
     }
   }
 
@@ -78,22 +78,22 @@ class UserService {
     required String uid,
     required UserPreferences preferences,
   }) async {
-    await _users.doc(uid).update({
+    await _users.doc(uid).set({
       'preferences': preferences.toMap(),
-    });
+    }, SetOptions(merge: true));
   }
 
   /// Add a group to the user's joinedGroups list.
   Future<void> addJoinedGroup(String uid, String groupId) async {
-    await _users.doc(uid).update({
+    await _users.doc(uid).set({
       'joinedGroups': FieldValue.arrayUnion([groupId]),
-    });
+    }, SetOptions(merge: true));
   }
 
   /// Remove a group from the user's joinedGroups list.
   Future<void> removeJoinedGroup(String uid, String groupId) async {
-    await _users.doc(uid).update({
+    await _users.doc(uid).set({
       'joinedGroups': FieldValue.arrayRemove([groupId]),
-    });
+    }, SetOptions(merge: true));
   }
 }

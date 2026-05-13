@@ -9,6 +9,7 @@ import '../widgets/app_header.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/section_header.dart';
 import 'assistant_screen.dart';
+import 'discovery_screen.dart';
 
 /// Profile screen — dynamically loads user info and joined groups from Firestore.
 class ProfileScreen extends StatelessWidget {
@@ -119,7 +120,13 @@ class ProfileScreen extends StatelessWidget {
                 title: 'My Joined Groups',
                 actionText:
                     userProvider.joinedGroups.isNotEmpty ? 'View All' : null,
-                onActionTap: () {},
+                onActionTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const DiscoveryScreen(),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 12),
               _buildJoinedGroupsSection(context, userProvider),

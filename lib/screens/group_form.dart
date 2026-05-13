@@ -142,7 +142,7 @@ class _GroupFormScreenState extends State<GroupFormScreen> {
           children: [
             // Custom header
             Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 20, 0),
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
               child: Row(
                 children: [
                   IconButton(
@@ -150,19 +150,29 @@ class _GroupFormScreenState extends State<GroupFormScreen> {
                     icon: const Icon(Icons.arrow_back_rounded),
                   ),
                   const SizedBox(width: 4),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        isEdit ? 'Edit Group' : 'Create New Group',
-                        style: AppTextStyles.headlineSmall,
-                      ),
-                      Text(
-                        'Set up a space to collaborate and study.',
-                        style: AppTextStyles.bodySmall,
-                      ),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isEdit ? 'Edit Group' : 'Create New Group',
+                          style: AppTextStyles.headlineSmall,
+                        ),
+                        Text(
+                          'Set up a space to collaborate and study.',
+                          style: AppTextStyles.bodySmall,
+                        ),
+                      ],
+                    ),
                   ),
+                  if (isEdit)
+                    IconButton(
+                      onPressed: _confirmDelete,
+                      icon: const Icon(
+                        Icons.delete_outline_rounded,
+                        color: AppColors.error,
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -424,6 +434,48 @@ class _GroupFormScreenState extends State<GroupFormScreen> {
               Navigator.pop(ctx);
             },
             child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
+  void _confirmDelete() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Group'),
+        content: const Text(
+          'Are you sure you want to delete this study group? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              try {
+                await FirebaseFirestore.instance
+                    .collection('study_groups')
+                    .doc(widget.group!.id)
+                    .delete();
+                if (mounted) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Group deleted successfully')),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to delete: $e')),
+                  );
+                }
+              }
+            },
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('Delete'),
           ),
         ],
       ),
