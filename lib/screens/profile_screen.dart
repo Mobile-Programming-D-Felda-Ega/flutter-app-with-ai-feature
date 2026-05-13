@@ -123,7 +123,7 @@ class ProfileScreen extends StatelessWidget {
                 onActionTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) => const DiscoveryScreen(),
+                      builder: (_) => const DiscoveryScreen(showBackButton: true),
                     ),
                   );
                 },

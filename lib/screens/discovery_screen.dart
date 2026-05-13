@@ -14,7 +14,9 @@ import '../widgets/group_list_card.dart';
 /// Discovery screen matching the Stitch design — search bar,
 /// horizontal filter chips, and vertical group list cards.
 class DiscoveryScreen extends StatefulWidget {
-  const DiscoveryScreen({super.key});
+  const DiscoveryScreen({super.key, this.showBackButton = false});
+
+  final bool showBackButton;
 
   @override
   State<DiscoveryScreen> createState() => _DiscoveryScreenState();
@@ -66,7 +68,22 @@ class _DiscoveryScreenState extends State<DiscoveryScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const AppHeader(),
+            if (widget.showBackButton)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 8, 20, 0),
+                child: Row(
+                  children: [
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.arrow_back_rounded),
+                    ),
+                    const SizedBox(width: 4),
+                    Text('Discovery', style: AppTextStyles.headlineSmall),
+                  ],
+                ),
+              )
+            else
+              const AppHeader(),
             // Search bar
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),

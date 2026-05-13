@@ -80,7 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => const DiscoveryScreen(),
+                            builder: (_) => const DiscoveryScreen(showBackButton: true),
                           ),
                         );
                       },
@@ -122,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       onActionTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) => const DiscoveryScreen(),
+                            builder: (_) => const DiscoveryScreen(showBackButton: true),
                           ),
                         );
                       },
@@ -155,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     onTap: () {
                                       Navigator.of(context).push(
                                         MaterialPageRoute(
-                                          builder: (_) => const DiscoveryScreen(),
+                                          builder: (_) => const DiscoveryScreen(showBackButton: true),
                                         ),
                                       );
                                     },
